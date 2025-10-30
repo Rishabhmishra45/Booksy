@@ -3,15 +3,34 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import Cards from "./Cards";
-import bookData from '../data/list.json';
 
 function Freebook() {
   const [book, setBook] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const freeBooks = bookData.filter(item => item.category === "Free");
-    setBook(freeBooks);
+    fetchFreeBooks();
   }, []);
+
+  const fetchFreeBooks = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/courses?category=Free');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch free courses');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setBook(data.courses);
+      }
+    } catch (error) {
+      console.error('Error fetching free courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const settings = {
     dots: true,
@@ -52,14 +71,14 @@ function Freebook() {
   };
 
   return (
-    <div className="mt-5 w-full bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 md:py-16 lg:py-20">
+    <div className="mt-5 w-full bg-linear-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 md:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="text-center mb-12 md:mb-16">
           <div className="inline-flex items-center justify-center mb-4">
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-pink-500 rounded-full mr-2"></div>
             <span className="text-pink-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
-              Free Courses
+              Free Courses from Database
             </span>
             <div className="w-2 h-2 sm:w-3 sm:h-3 bg-pink-500 rounded-full ml-2"></div>
           </div>
@@ -67,19 +86,23 @@ function Freebook() {
             Free <span className="text-pink-500">Offered Courses</span>
           </h1>
           <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-4 leading-relaxed">
-            Start your learning journey with our high-quality free courses. 
+            Start your learning journey with our high-quality free courses from our database. 
             Learn from industry experts and build practical skills that employers value.
-            No hidden costs, just pure learning.
           </p>
         </div>
 
         {/* Slider Container */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 md:p-8 lg:p-10 mb-6 md:mb-8">
           <div className="slider-container">
-            {book.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-8 md:py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
+                <p className="text-gray-500 dark:text-gray-400">Loading free courses...</p>
+              </div>
+            ) : book.length > 0 ? (
               <Slider {...settings}>
                 {book.map((item) => (
-                  <div key={item.id} className="px-2 sm:px-3">
+                  <div key={item._id} className="px-2 sm:px-3">
                     <div className="transform hover:scale-[1.02] transition-transform duration-300">
                       <Cards item={item} />
                     </div>

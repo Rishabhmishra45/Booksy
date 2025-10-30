@@ -3,11 +3,19 @@ import { Link } from 'react-router-dom';
 import { LuSun } from "react-icons/lu";
 import { LuMoon } from "react-icons/lu";
 import { useDarkMode } from '../context/DarkModeContext';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const { isDarkMode, toggleDarkMode } = useDarkMode();
+    const { user, logout } = useAuth();
+
     const toggleMenu = () => setIsOpen(!isOpen);
+
+    const handleLogout = () => {
+        logout();
+        toggleMenu();
+    };
 
     return (
         <>
@@ -24,6 +32,7 @@ const Navbar = () => {
                         <Link to="/about" className="hover:text-black dark:hover:text-white transition-colors duration-300">About</Link>
                         <Link to="/courses" className="hover:text-black dark:hover:text-white transition-colors duration-300">Courses</Link>
                         <Link to="/contact" className="hover:text-black dark:hover:text-white transition-colors duration-300">Contact</Link>
+                        <Link to="/admin/login" className="hover:text-black dark:hover:text-white transition-colors duration-300">Admin</Link>
                     </div>
 
                     {/* Right Side */}
@@ -47,24 +56,38 @@ const Navbar = () => {
                         </div>
 
                         {/* Dark Mode Toggle */}
-                        <button 
+                        <button
                             onClick={toggleDarkMode}
                             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-300"
                             aria-label="Toggle dark mode"
                         >
                             {isDarkMode ? (
-                                // Sun icon for light mode
-                                <LuSun className='h-6 w-6 text-yellow-500 transition-colors duration-300'/>
+                                <LuSun className='h-6 w-6 text-yellow-500 transition-colors duration-300' />
                             ) : (
-                                // Moon icon for dark mode
                                 <LuMoon className='h-6 w-6 text-gray-700 transition-colors duration-300' />
                             )}
                         </button>
 
-                        {/* Login Button */}
-                        <button className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md hover:bg-gray-900 dark:hover:bg-gray-200 text-sm transition-colors duration-300">
-                            Login
-                        </button>
+                        {/* User Profile or Login Button */}
+                        {user ? (
+                            <div className="flex items-center space-x-4">
+                                <span className="text-gray-700 dark:text-gray-300 text-sm">
+                                    Welcome, {user.name}
+                                </span>
+                                <button
+                                    onClick={logout}
+                                    className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-300"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <Link to="/login">
+                                <button className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md hover:bg-gray-900 dark:hover:bg-gray-200 text-sm transition-colors duration-300">
+                                    Login
+                                </button>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Hamburger Menu */}
@@ -85,14 +108,32 @@ const Navbar = () => {
                         <span className="text-xl font-bold text-gray-800 dark:text-white transition-colors duration-300">Menu</span>
                         <button onClick={toggleMenu} className="text-2xl text-gray-800 dark:text-white transition-colors duration-300">&times;</button>
                     </div>
-                    
+
                     <Link to="/" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">Home</Link>
                     <Link to="/about" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">About</Link>
                     <Link to="/courses" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">Courses</Link>
                     <Link to="/contact" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">Contact</Link>
-                    
+                    <Link to="/admin/login" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">
+                        Admin
+                    </Link>
+
+                    {/* User info in mobile menu */}
+                    {user && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                Welcome, {user.name}
+                            </p>
+                            <button
+                                onClick={handleLogout}
+                                className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300 text-left w-full"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    )}
+
                     {/* Dark Mode Toggle for Mobile */}
-                    <button 
+                    <button
                         onClick={() => {
                             toggleDarkMode();
                             toggleMenu();
@@ -101,16 +142,23 @@ const Navbar = () => {
                     >
                         {isDarkMode ? (
                             <>
-                                <LuSun className='h-6 w-6 text-yellow-500 transition-colors duration-300'/>
+                                <LuSun className='h-6 w-6 text-yellow-500 transition-colors duration-300' />
                                 <span>Light Mode</span>
                             </>
                         ) : (
                             <>
-                                <LuMoon className='h-6 w-6 text-gray-700 transition-colors duration-300'/>
+                                <LuMoon className='h-6 w-6 text-gray-700 transition-colors duration-300' />
                                 <span>Dark Mode</span>
                             </>
                         )}
                     </button>
+
+                    {/* Login/Logout in mobile menu */}
+                    {!user && (
+                        <Link to="/login" onClick={toggleMenu} className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white py-2 transition-colors duration-300">
+                            Login
+                        </Link>
+                    )}
                 </div>
             </div>
 
