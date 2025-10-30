@@ -83,7 +83,7 @@ const About = () => {
                 </div>
 
                 {/* Stats Section */}
-                <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-6 md:p-8 lg:p-12 mb-12 md:mb-16">
+                <div className="bg-linear-to-r from-pink-500 to-purple-600 rounded-2xl p-6 md:p-8 lg:p-12 mb-12 md:mb-16">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                         {stats.map((stat, index) => (
                             <div key={index} className="text-center text-white">

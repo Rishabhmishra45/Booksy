@@ -7,6 +7,7 @@ import Cards from "./Cards";
 function Freebook() {
   const [book, setBook] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     fetchFreeBooks();
@@ -15,13 +16,13 @@ function Freebook() {
   const fetchFreeBooks = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/courses?category=Free');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch free courses');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         setBook(data.courses);
       }
@@ -34,112 +35,262 @@ function Freebook() {
 
   const settings = {
     dots: true,
-    infinite: true,
-    speed: 500,
+    infinite: book.length > 3,
+    speed: 800,
     slidesToShow: 3,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 4000,
     pauseOnHover: true,
-    cssEase: "ease-in-out",
+    cssEase: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    beforeChange: (current, next) => setCurrentSlide(next),
+    appendDots: dots => (
+      <div className="mt-8">
+        <ul className="flex justify-center space-x-2">{dots}</ul>
+      </div>
+    ),
+    customPaging: i => (
+      <div className={`w-2 h-2 rounded-full transition-all duration-300 ${i === currentSlide ? 'bg-pink-500 w-6' : 'bg-gray-300'
+        }`}></div>
+    ),
     responsive: [
       {
-        breakpoint: 1024,
+        breakpoint: 1280,
         settings: {
           slidesToShow: 3,
           slidesToScroll: 1,
-          infinite: true,
+          dots: true
+        }
+      },
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
           dots: true
         }
       },
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: 2,
+          slidesToShow: 1,
           slidesToScroll: 1,
-          initialSlide: 2
+          dots: true
         }
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
-          slidesToScroll: 1
+          slidesToScroll: 1,
+          dots: true
         }
       }
     ]
   };
 
+  // Custom arrow components
+  const NextArrow = (props) => {
+    const { className, style, onClick } = props;
+    return (
+      <button
+        className={`${className} hidden md:flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-10 before:hidden`}
+        style={{ ...style, right: '-50px' }}
+        onClick={onClick}
+      >
+        <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    );
+  };
+
+  const PrevArrow = (props) => {
+    const { className, style, onClick } = props;
+    return (
+      <button
+        className={`${className} hidden md:flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 z-10 before:hidden`}
+        style={{ ...style, left: '-50px' }}
+        onClick={onClick}
+      >
+        <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+    );
+  };
+
+  // Enhanced settings with custom arrows
+  const enhancedSettings = {
+    ...settings,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />
+  };
+
   return (
-    <div className="mt-5 w-full bg-linear-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 md:py-16 lg:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center justify-center mb-4">
-            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-pink-500 rounded-full mr-2"></div>
-            <span className="text-pink-600 font-semibold text-xs sm:text-sm uppercase tracking-wider">
-              Free Courses from Database
+    <div className="mt-8 w-full bg-linear-to-br from-gray-50 via-white to-blue-50/30 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900/10 py-16 md:py-20 lg:py-24 relative overflow-visible">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-pink-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/3 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Enhanced Header Section */}
+        <div className="text-center mb-16 md:mb-20">
+          <div className="inline-flex items-center justify-center px-4 py-2 bg-pink-50 dark:bg-pink-900/20 rounded-full border border-pink-100 dark:border-pink-800 mb-6">
+            <div className="w-2 h-2 bg-pink-500 rounded-full mr-2 animate-pulse"></div>
+            <span className="text-pink-600 dark:text-pink-400 font-semibold text-sm uppercase tracking-wider">
+              Free Courses Collection
             </span>
-            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-pink-500 rounded-full ml-2"></div>
+            <div className="w-2 h-2 bg-pink-500 rounded-full ml-2 animate-pulse"></div>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-4 md:mb-6 leading-tight">
-            Free <span className="text-pink-500">Offered Courses</span>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+            Free <span className="text-transparent bg-clip-text bg-linear-to-r from-pink-500 to-purple-600">Premium Courses</span>
           </h1>
-          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-4 leading-relaxed">
-            Start your learning journey with our high-quality free courses from our database. 
-            Learn from industry experts and build practical skills that employers value.
+
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
+            Kickstart your learning journey with our carefully curated free courses from our database.
+            Gain industry-relevant skills and practical knowledge that sets you apart.
           </p>
+
+          {/* Live Stats */}
+          <div className="flex items-center justify-center space-x-6 mt-8">
+            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Live from Database</span>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>{book.length} Courses Available</span>
+            </div>
+          </div>
         </div>
 
-        {/* Slider Container */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 md:p-8 lg:p-10 mb-6 md:mb-8">
-          <div className="slider-container">
+        {/* Enhanced Slider Container */}
+        <div className="relative mb-12 md:mb-16">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 dark:border-gray-700/20 p-6 md:p-8 lg:p-10">
             {loading ? (
-              <div className="text-center py-8 md:py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 mx-auto mb-4"></div>
-                <p className="text-gray-500 dark:text-gray-400">Loading free courses...</p>
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-r from-pink-500 to-purple-600 rounded-2xl mb-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-lg">Loading premium free courses...</p>
               </div>
             ) : book.length > 0 ? (
-              <Slider {...settings}>
-                {book.map((item) => (
-                  <div key={item._id} className="px-2 sm:px-3">
-                    <div className="transform hover:scale-[1.02] transition-transform duration-300">
-                      <Cards item={item} />
+              <div className="relative">
+                <Slider {...enhancedSettings}>
+                  {book.map((item, index) => (
+                    <div key={item._id} className="px-3 lg:px-4 pb-2 pt-2">
+                      <div className="transform hover:scale-[1.03] transition-all duration-500 ease-out hover:z-20 relative">
+                        <div className="absolute -inset-2 bg-linear-to-r from-pink-500 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-20 blur transition-all duration-300"></div>
+                        <Cards item={item} />
+                      </div>
                     </div>
+                  ))}
+                </Slider>
+
+                {/* Slide Counter */}
+                <div className="flex justify-center items-center space-x-4 mt-8">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {currentSlide + 1} / {book.length}
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => document.querySelector('.slick-prev').click()}
+                      className="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() => document.querySelector('.slick-next').click()}
+                      className="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      →
+                    </button>
                   </div>
-                ))}
-              </Slider>
+                </div>
+              </div>
             ) : (
-              <div className="text-center py-8 md:py-12">
-                <div className="text-gray-400 dark:text-gray-500 text-4xl sm:text-6xl mb-4">📚</div>
-                <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">No free courses available at the moment.</p>
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-3xl mb-6">
+                  <span className="text-3xl text-gray-400">📚</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                  No Free Courses Available
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                  We're currently updating our free courses collection. Check back soon for new additions!
+                </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Stats Section */}
+        {/* Enhanced Stats Section */}
         <div className="text-center">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xl sm:text-2xl font-bold text-pink-600 mb-1">{book.length}+</div>
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Free Courses</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xl sm:text-2xl font-bold text-pink-600 mb-1">100%</div>
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Free Access</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xl sm:text-2xl font-bold text-pink-600 mb-1">24/7</div>
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Available</div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-              <div className="text-xl sm:text-2xl font-bold text-pink-600 mb-1">Lifetime</div>
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">Access</div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
+            {[
+              { value: `${book.length}+`, label: 'Free Courses', icon: '📚' },
+              { value: '100%', label: 'Free Access', icon: '🎯' },
+              { value: '24/7', label: 'Available', icon: '⏰' },
+              { value: 'Lifetime', label: 'Access', icon: '∞' }
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 dark:border-gray-700/20 hover:shadow-xl hover:scale-105 transition-all duration-300 group"
+              >
+                <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">
+                  {stat.icon}
+                </div>
+                <div className="text-2xl md:text-3xl font-bold bg-linear-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* CTA Section */}
+        <div className="text-center mt-12 md:mt-16">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Ready to start learning?
+          </p>
+          <button className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+            Explore All Courses
+          </button>
+        </div>
       </div>
+
+      {/* Custom Styles */}
+      <style jsx>{`
+        .slick-list {
+          margin: 0 -12px;
+          padding: 20px 0;
+        }
+        
+        .slick-slide > div {
+          padding: 0 12px;
+        }
+        
+        .slick-track {
+          display: flex !important;
+          align-items: stretch;
+        }
+        
+        .slick-slide {
+          height: auto !important;
+        }
+        
+        .slick-slide > div {
+          height: 100%;
+        }
+      `}</style>
     </div>
   );
 }
