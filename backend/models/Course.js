@@ -23,7 +23,8 @@ const courseSchema = new mongoose.Schema({
   },
   originalPrice: {
     type: Number,
-    default: 0
+    default: 0,
+    min: 0
   },
   category: {
     type: String,
@@ -90,8 +91,15 @@ courseSchema.pre('save', function(next) {
   if (this.category === 'Free') {
     this.isFree = true;
     this.price = 'Free';
+    this.originalPrice = 0;
   }
   next();
 });
+
+// Custom validator for originalPrice
+courseSchema.path('originalPrice').validate(function(value) {
+  if (value === null || value === undefined) return true;
+  return typeof value === 'number' && !isNaN(value) && value >= 0;
+}, 'Original price must be a valid non-negative number');
 
 export default mongoose.model('Course', courseSchema);

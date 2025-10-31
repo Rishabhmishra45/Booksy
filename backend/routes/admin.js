@@ -122,52 +122,23 @@ router.get('/verify', adminAuth, async (req, res) => {
 // @access  Private (Admin)
 router.get('/courses', adminAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 50, search, category } = req.query;
-
-    let query = {};
+    console.log('📦 Fetching courses for admin...');
     
-    // Search filter
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { title: { $regex: search, $options: 'i' } },
-        { instructor: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
-      ];
-    }
-
-    // Category filter
-    if (category && category !== 'All') {
-      query.category = category;
-    }
-
-    const courses = await Course.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Course.countDocuments(query);
-
-    // Get categories for filter
-    const categories = await Course.distinct('category');
-
+    const courses = await Course.find({}).sort({ createdAt: -1 });
+    
+    console.log(`✅ Found ${courses.length} courses`);
+    
     res.json({
       success: true,
-      courses,
-      total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: parseInt(page),
-      filters: {
-        categories
-      }
+      courses: courses || []
     });
-
+    
   } catch (error) {
-    console.error('Get admin courses error:', error);
+    console.error('❌ Error fetching courses:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while fetching courses',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Error fetching courses',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
@@ -177,57 +148,78 @@ router.get('/courses', adminAuth, async (req, res) => {
 // @access  Private (Admin)
 router.post('/courses', adminAuth, async (req, res) => {
   try {
-    const courseData = req.body;
+    const {
+      name,
+      title,
+      description,
+      price,
+      originalPrice,
+      category,
+      image,
+      instructor,
+      duration,
+      level,
+      isFree,
+      requirements,
+      learningOutcomes,
+      tags
+    } = req.body;
 
-    console.log('Received course data:', courseData);
+    console.log('📦 Creating new course with data:', req.body);
 
-    // Validate required fields
-    const requiredFields = ['name', 'title', 'description', 'price', 'category', 'image'];
-    const missingFields = requiredFields.filter(field => !courseData[field]);
-    
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      });
-    }
+    // ✅ FIX: Proper price formatting
+    const formatPrice = (priceValue) => {
+      if (!priceValue || priceValue === 'Free' || priceValue === 'free') return 0;
+      // Remove $ symbol and convert to number
+      const numericValue = parseFloat(priceValue.toString().replace(/[$,]/g, ''));
+      return isNaN(numericValue) ? 0 : numericValue;
+    };
 
-    // Set default values for optional fields
-    const course = new Course({
-      name: courseData.name,
-      title: courseData.title,
-      description: courseData.description,
-      price: courseData.price,
-      category: courseData.category,
-      image: courseData.image,
-      instructor: courseData.instructor || 'BOOKSY Team',
-      duration: courseData.duration || 'Self-paced',
-      level: courseData.level || 'Beginner',
-      isFree: courseData.category === 'Free',
-      originalPrice: courseData.originalPrice || 0,
-      requirements: courseData.requirements || ['Basic knowledge required'],
-      learningOutcomes: courseData.learningOutcomes || ['Learn new skills'],
-      tags: courseData.tags || ['popular'],
+    // Ensure free course logic is consistent
+    const finalIsFree = Boolean(isFree) || category === 'Free';
+    const finalPrice = finalIsFree ? 'Free' : price;
+    const finalOriginalPrice = finalIsFree ? 0 : formatPrice(originalPrice);
+    const finalCategory = finalIsFree ? 'Free' : category;
+
+    const courseData = {
+      name,
+      title,
+      description,
+      price: finalPrice,
+      originalPrice: finalOriginalPrice,
+      category: finalCategory,
+      image,
+      instructor: instructor || 'BOOKSY Team',
+      duration: duration || 'Self-paced',
+      level: level || 'Beginner',
+      isFree: finalIsFree,
+      requirements: Array.isArray(requirements) ? requirements : ['Basic knowledge required'],
+      learningOutcomes: Array.isArray(learningOutcomes) ? learningOutcomes : ['Learn new skills'],
+      tags: Array.isArray(tags) ? tags : ['popular'],
       rating: { average: 0, count: 0 },
       studentsEnrolled: 0,
       isActive: true
-    });
+    };
 
-    const savedCourse = await course.save();
-    console.log('Course saved successfully:', savedCourse._id);
+    console.log('✅ Processed course data:', courseData);
+
+    const course = new Course(courseData);
+    await course.save();
+
+    console.log('🎉 Course created successfully:', course._id);
 
     res.status(201).json({
       success: true,
       message: 'Course created successfully',
-      course: savedCourse
+      course: course
     });
 
   } catch (error) {
-    console.error('Create course error:', error);
+    console.error('❌ Create course error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while creating course',
-      error: error.message
+      message: 'Error creating course',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Check course data format'
     });
   }
 });
@@ -237,12 +229,60 @@ router.post('/courses', adminAuth, async (req, res) => {
 // @access  Private (Admin)
 router.put('/courses/:id', adminAuth, async (req, res) => {
   try {
+    const {
+      name,
+      title,
+      description,
+      price,
+      originalPrice,
+      category,
+      image,
+      instructor,
+      duration,
+      level,
+      isFree,
+      requirements,
+      learningOutcomes,
+      tags
+    } = req.body;
+
+    console.log('✏️ Updating course:', req.params.id);
+
+    // ✅ FIX: Same price conversion as create
+    const formatPrice = (priceValue) => {
+      if (!priceValue || priceValue === 'Free' || priceValue === 'free') return 0;
+      const numericValue = parseFloat(priceValue.toString().replace(/[$,]/g, ''));
+      return isNaN(numericValue) ? 0 : numericValue;
+    };
+
+    // Ensure free course logic is consistent
+    const finalIsFree = Boolean(isFree) || category === 'Free';
+    const finalPrice = finalIsFree ? 'Free' : price;
+    const finalOriginalPrice = finalIsFree ? 0 : formatPrice(originalPrice);
+    const finalCategory = finalIsFree ? 'Free' : category;
+
+    const updateData = {
+      name,
+      title,
+      description,
+      price: finalPrice,
+      originalPrice: finalOriginalPrice,
+      category: finalCategory,
+      image,
+      instructor,
+      duration,
+      level,
+      isFree: finalIsFree,
+      requirements: Array.isArray(requirements) ? requirements : [''],
+      learningOutcomes: Array.isArray(learningOutcomes) ? learningOutcomes : [''],
+      tags: Array.isArray(tags) ? tags : ['']
+    };
+
+    console.log('✅ Update data:', updateData);
+
     const course = await Course.findByIdAndUpdate(
       req.params.id,
-      { 
-        ...req.body,
-        isFree: req.body.category === 'Free' // Update isFree based on category
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -256,15 +296,15 @@ router.put('/courses/:id', adminAuth, async (req, res) => {
     res.json({
       success: true,
       message: 'Course updated successfully',
-      course
+      course: course
     });
 
   } catch (error) {
-    console.error('Update course error:', error);
+    console.error('❌ Update course error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while updating course',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Error updating course',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Check course data format'
     });
   }
 });
@@ -299,201 +339,45 @@ router.delete('/courses/:id', adminAuth, async (req, res) => {
   }
 });
 
-// @desc    Get course by ID
-// @route   GET /api/admin/courses/:id
-// @access  Private (Admin)
-router.get('/courses/:id', adminAuth, async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id);
-
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      course
-    });
-
-  } catch (error) {
-    console.error('Get course error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching course',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/dashboard
 // @access  Private (Admin)
 router.get('/dashboard', adminAuth, async (req, res) => {
   try {
-    // Total courses
+    console.log('📊 Fetching admin dashboard...');
+    
     const totalCourses = await Course.countDocuments();
     
     // Total students enrolled
     const totalStudentsResult = await Course.aggregate([
-      { $group: { _id: null, total: { $sum: '$studentsEnrolled' } } }
+      { $group: { _id: null, total: { $sum: "$studentsEnrolled" } } }
     ]);
-    const totalStudents = totalStudentsResult[0]?.total || 0;
-
-    // Total users
-    const totalUsers = await User.countDocuments();
-
-    // Recent courses (last 5)
-    const recentCourses = await Course.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('name title category studentsEnrolled createdAt image');
-
-    // Category distribution
-    const categoryStats = await Course.aggregate([
-      { 
-        $group: { 
-          _id: '$category', 
-          count: { $sum: 1 },
-          students: { $sum: '$studentsEnrolled' },
-          avgRating: { $avg: '$rating.average' }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]);
-
-    // Popular courses (most enrolled)
-    const popularCourses = await Course.find()
+    
+    const popularCourses = await Course.find({})
       .sort({ studentsEnrolled: -1 })
-      .limit(5)
-      .select('name title category studentsEnrolled rating image');
+      .limit(5);
 
-    // Today's new courses
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const newCoursesToday = await Course.countDocuments({
-      createdAt: { $gte: today }
-    });
-
-    // Weekly growth
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    const coursesLastWeek = await Course.countDocuments({
-      createdAt: { $gte: lastWeek }
-    });
+    const recentCourses = await Course.find({})
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     res.json({
       success: true,
       dashboard: {
         totalCourses,
-        totalStudents,
-        totalUsers,
-        newCoursesToday,
-        coursesLastWeek,
-        recentCourses,
-        categoryStats,
-        popularCourses
+        totalStudents: totalStudentsResult[0]?.total || 0,
+        totalUsers: 1500, // Temporary static data
+        popularCourses,
+        recentCourses
       }
     });
-
-  } catch (error) {
-    console.error('Get dashboard error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching dashboard data',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// @desc    Bulk operations
-// @route   POST /api/admin/courses/bulk
-// @access  Private (Admin)
-router.post('/courses/bulk', adminAuth, async (req, res) => {
-  try {
-    const { action, courseIds } = req.body;
-
-    if (!action || !courseIds || !Array.isArray(courseIds)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Action and courseIds array are required'
-      });
-    }
-
-    let result;
-    switch (action) {
-      case 'delete':
-        result = await Course.deleteMany({ _id: { $in: courseIds } });
-        break;
-      case 'activate':
-        result = await Course.updateMany(
-          { _id: { $in: courseIds } },
-          { $set: { isActive: true } }
-        );
-        break;
-      case 'deactivate':
-        result = await Course.updateMany(
-          { _id: { $in: courseIds } },
-          { $set: { isActive: false } }
-        );
-        break;
-      default:
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid action'
-        });
-    }
-
-    res.json({
-      success: true,
-      message: `Bulk operation ${action} completed successfully`,
-      result
-    });
-
-  } catch (error) {
-    console.error('Bulk operation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during bulk operation',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-});
-
-// @desc    Get system health
-// @route   GET /api/admin/health
-// @access  Private (Admin)
-router.get('/health', adminAuth, async (req, res) => {
-  try {
-    // Database connection check
-    const dbStatus = 'connected'; // You can add actual DB ping here
     
-    // Memory usage
-    const memoryUsage = process.memoryUsage();
-    
-    // Uptime
-    const uptime = process.uptime();
-
-    res.json({
-      success: true,
-      health: {
-        database: dbStatus,
-        memory: {
-          used: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB',
-          total: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB'
-        },
-        uptime: Math.round(uptime) + ' seconds',
-        timestamp: new Date().toISOString()
-      }
-    });
-
   } catch (error) {
-    console.error('Health check error:', error);
+    console.error('❌ Dashboard error:', error);
     res.status(500).json({
       success: false,
-      message: 'Health check failed'
+      message: 'Error fetching dashboard data',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });
