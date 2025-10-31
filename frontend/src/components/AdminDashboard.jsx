@@ -13,6 +13,11 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
+  // ✅ Use environment variable for backend URL - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   // New course form state
   const [newCourse, setNewCourse] = useState({
     name: '',
@@ -69,7 +74,7 @@ const AdminDashboard = () => {
   const verifyAdminToken = async () => {
     try {
       const adminToken = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/verify', {
+      const response = await fetch(`${API_URL}/api/admin/verify`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -102,7 +107,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+      const response = await fetch(`${API_URL}/api/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -145,7 +150,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/courses', {
+      const response = await fetch(`${API_URL}/api/admin/courses`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -188,7 +193,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/admin/courses', {
+      const response = await fetch(`${API_URL}/api/admin/courses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +257,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/admin/courses/${selectedCourse._id}`, {
+      const response = await fetch(`${API_URL}/api/admin/courses/${selectedCourse._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -298,7 +303,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/admin/courses/${courseId}`, {
+      const response = await fetch(`${API_URL}/api/admin/courses/${courseId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`

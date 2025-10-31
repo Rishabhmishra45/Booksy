@@ -15,6 +15,11 @@ const AdminLogin = () => {
 
   const navigate = useNavigate();
 
+  // ✅ Use environment variable for backend URL - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   // Auto-hide notification after 5 seconds
   useEffect(() => {
     if (showNotification) {
@@ -51,7 +56,7 @@ const AdminLogin = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/admin/login', {
+      const response = await fetch(`${API_URL}/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +81,7 @@ const AdminLogin = () => {
         showNotificationMessage(`❌ ${errorMsg}`, 'error');
       }
     } catch (err) {
-      const errorMsg = 'Network error. Please check if backend server is running.';
+      const errorMsg = `Network error. Please check if backend server is running on ${API_URL}`;
       setError(errorMsg);
       showNotificationMessage(`❌ ${errorMsg}`, 'error');
     } finally {
@@ -318,7 +323,7 @@ const AdminLogin = () => {
       </div>
 
       {/* Custom CSS for animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes slideInRight {
           from {
             transform: translateX(100%);

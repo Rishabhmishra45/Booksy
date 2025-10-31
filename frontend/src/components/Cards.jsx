@@ -8,6 +8,11 @@ function Cards({ item }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  // ✅ Use environment variable for backend URL - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   const handleEnrollClick = async () => {
     if (!user) {
       navigate('/login', { state: { from: '/courses' } });
@@ -15,7 +20,7 @@ function Cards({ item }) {
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/courses/${item._id}/enroll`, {
+      const response = await fetch(`${API_URL}/api/courses/${item._id}/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -16,6 +16,11 @@ const Login = () => {
   
   const from = location.state?.from?.pathname || '/courses';
 
+  // ✅ Backend URL from env variables - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -29,7 +34,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,7 +51,7 @@ const Login = () => {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      setError('Network error. Please check if backend server is running.');
+      setError(`Network error. Please check if backend server is running on ${API_URL}`);
     } finally {
       setLoading(false);
     }
@@ -54,7 +59,6 @@ const Login = () => {
 
   return (
     <>
-      {/* Navbar for login page */}
       <nav className="fixed top-0 left-0 w-full bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-800 z-50 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-gray-800 dark:text-white transition-colors duration-300">

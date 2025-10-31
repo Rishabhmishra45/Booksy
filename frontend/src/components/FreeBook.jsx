@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import "../../src/slider-styles.css";
 import Slider from "react-slick";
 import Cards from "./Cards";
 
@@ -9,13 +10,18 @@ function Freebook() {
   const [loading, setLoading] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Get API URL based on environment - FIXED for Vite
+  const API_URL = import.meta.env.PROD
+    ? import.meta.env.VITE_API_URL_PROD
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   useEffect(() => {
     fetchFreeBooks();
   }, []);
 
   const fetchFreeBooks = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/courses?category=Free');
+      const response = await fetch(`${API_URL}/api/courses?category=Free`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch free courses');
@@ -199,13 +205,13 @@ function Freebook() {
                   </span>
                   <div className="flex items-center space-x-1">
                     <button
-                      onClick={() => document.querySelector('.slick-prev').click()}
+                      onClick={() => document.querySelector('.slick-prev')?.click()}
                       className="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       ←
                     </button>
                     <button
-                      onClick={() => document.querySelector('.slick-next').click()}
+                      onClick={() => document.querySelector('.slick-next')?.click()}
                       className="w-8 h-8 flex items-center justify-center bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                     >
                       →
@@ -266,31 +272,6 @@ function Freebook() {
           </button>
         </div>
       </div>
-
-      {/* Custom Styles */}
-      <style jsx>{`
-        .slick-list {
-          margin: 0 -12px;
-          padding: 20px 0;
-        }
-        
-        .slick-slide > div {
-          padding: 0 12px;
-        }
-        
-        .slick-track {
-          display: flex !important;
-          align-items: stretch;
-        }
-        
-        .slick-slide {
-          height: auto !important;
-        }
-        
-        .slick-slide > div {
-          height: 100%;
-        }
-      `}</style>
     </div>
   );
 }

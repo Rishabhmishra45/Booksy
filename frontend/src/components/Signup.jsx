@@ -15,6 +15,11 @@ const Signup = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // ✅ Use environment variable for backend URL - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -27,6 +32,7 @@ const Signup = () => {
     setLoading(true);
     setError('');
 
+    // ✅ Client-side validations
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -40,7 +46,7 @@ const Signup = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +67,7 @@ const Signup = () => {
         setError(data.message || 'Registration failed');
       }
     } catch (err) {
-      setError('Network error. Please check if backend server is running.');
+      setError(`Network error. Please check if backend server is running on ${API_URL}`);
     } finally {
       setLoading(false);
     }

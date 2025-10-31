@@ -9,6 +9,11 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("default");
 
+  // Get API URL based on environment - FIXED for Vite
+  const API_URL = import.meta.env.PROD 
+    ? import.meta.env.VITE_API_URL_PROD 
+    : import.meta.env.VITE_API_URL_LOCAL;
+
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -16,7 +21,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/courses');
+      const response = await fetch(`${API_URL}/api/courses`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch courses');
@@ -30,7 +35,7 @@ const Courses = () => {
         setError(data.message || 'Failed to fetch courses');
       }
     } catch (err) {
-      setError('Network error. Please check if backend server is running.');
+      setError(`Network error. Please check if backend server is running on ${API_URL}`);
       console.error('Fetch courses error:', err);
     } finally {
       setLoading(false);
@@ -125,7 +130,7 @@ const Courses = () => {
           </h2>
           <p className="text-red-600 dark:text-red-400 text-lg mb-4">{error}</p>
           <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
-            Please ensure your backend server is running on http://localhost:5000
+            Please ensure your backend server is running on {API_URL}
           </p>
           <div className="flex gap-3 justify-center">
             <button 

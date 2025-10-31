@@ -214,7 +214,7 @@ const Contact = () => {
                         Visit Our Campus
                     </h3>
                     <div className="bg-white dark:bg-gray-700 p-6 md:p-8 rounded-xl text-center transition-colors duration-300">
-                        <div className="w-full h-48 sm:h-64 bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900 dark:to-purple-900 rounded-lg flex items-center justify-center mb-4">
+                        <div className="w-full h-48 sm:h-64 bg-linear-to-br from-pink-100 to-purple-100 dark:from-pink-900 dark:to-purple-900 rounded-lg flex items-center justify-center mb-4">
                             <span className="text-4xl sm:text-6xl">🗺️</span>
                         </div>
                         <p className="text-gray-600 dark:text-gray-300">
